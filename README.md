@@ -1,36 +1,143 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# YTTERM - Terminal YouTube Player
+
+A retro terminal/ASCII/Winamp-inspired YouTube player that generates playlists dynamically from music subreddits.
+
+## Features
+
+- 🎵 **Reddit-Powered Playlists**: Automatically fetch YouTube music from genre-specific subreddits
+- 🎨 **Terminal Aesthetic**: Retro terminal/ASCII/Winamp inspired design
+- 🌓 **Light/Dark Themes**: Toggle between themes for comfortable viewing
+- 📱 **Responsive Design**: Fully mobile-friendly with adaptive layouts
+- ⌨️ **Keyboard Shortcuts**: Control playback without touching the mouse
+- 🔀 **Queue Management**: Shuffle, repeat, and manage your queue
+- 📜 **Playlist History**: Access previously generated playlists
+- 🎛️ **Full Playback Control**: Progress bar, volume slider, visualizer
+
+## Supported Genres
+
+- Vaporwave (r/Vaporwave)
+- Synthwave (r/synthwave)
+- Lo-Fi Hip Hop (r/LofiHipHop)
+- Chillwave (r/chillwave)
+- Electronic (r/electronicmusic)
+- Future Beats (r/futurebeats)
+- Listen To This (r/listentothis)
+- Indie (r/indieheads)
+- Metal (r/Metal)
+- Hip Hop (r/hiphopheads)
+- Jazz (r/Jazz)
+- Ambient (r/ambientmusic)
+- Drum & Bass (r/DnB)
+- Techno (r/Techno)
+- Post-Rock (r/postrock)
+- Punk (r/punk)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 18+ 
+- npm or yarn
+
+### Installation
 
 ```bash
+# Install dependencies
+npm install
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Keyboard Shortcuts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Key | Action |
+|-----|--------|
+| `Space` | Play / Pause |
+| `←` | Seek back 10s |
+| `→` | Seek forward 10s |
+| `Shift + ←` | Previous track |
+| `Shift + →` | Next track |
+| `↑` | Volume up |
+| `↓` | Volume down |
+| `M` | Toggle mute |
+| `R` | Cycle repeat mode |
+| `S` | Toggle shuffle |
+| `N` | Next track |
+| `P` | Previous track |
+| `?` | Show help |
 
-## Learn More
+## Tech Stack
 
-To learn more about Next.js, take a look at the following resources:
+- **Framework**: Next.js 15 (App Router)
+- **Language**: TypeScript
+- **Styling**: Tailwind CSS
+- **State Management**: Zustand
+- **YouTube Integration**: react-youtube
+- **Icons**: Lucide React
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+src/
+├── app/                    # Next.js app directory
+│   ├── globals.css        # Global styles & theme variables
+│   ├── layout.tsx         # Root layout
+│   └── page.tsx           # Home page
+├── components/
+│   ├── layout/            # Layout components
+│   ├── player/            # Player components
+│   │   ├── Player.tsx     # YouTube player wrapper
+│   │   ├── PlayerControls.tsx
+│   │   ├── ProgressBar.tsx
+│   │   ├── VolumeSlider.tsx
+│   │   └── Visualizer.tsx
+│   ├── playlist/          # Playlist components
+│   │   ├── GenreSelector.tsx
+│   │   ├── Playlist.tsx
+│   │   ├── PlaylistItem.tsx
+│   │   └── PlaylistHistory.tsx
+│   ├── terminal/          # Terminal UI components
+│   │   ├── TerminalHeader.tsx
+│   │   ├── TerminalWindow.tsx
+│   │   └── AsciiArt.tsx
+│   ├── providers/         # React providers
+│   └── ui/                # Reusable UI components
+├── constants/             # Constants & configuration
+│   ├── ascii.ts          # ASCII art characters
+│   └── genres.ts         # Genre/subreddit mappings
+├── hooks/                 # Custom React hooks
+├── lib/                   # Utility functions
+│   ├── reddit.ts         # Reddit API helpers
+│   ├── youtube.ts        # YouTube helpers
+│   └── utils.ts          # General utilities
+├── stores/               # Zustand stores
+│   ├── playerStore.ts    # Player state
+│   ├── playlistStore.ts  # Playlist state
+│   └── themeStore.ts     # Theme state
+└── types/                # TypeScript types
+```
 
-## Deploy on Vercel
+## Deployment
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Vercel (Recommended)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy
+vercel
+```
+
+Or connect your GitHub repository to Vercel for automatic deployments.
+
+## License
+
+MIT License
+
+---
+
+**Note**: This application uses Reddit's public API to fetch posts containing YouTube links.
