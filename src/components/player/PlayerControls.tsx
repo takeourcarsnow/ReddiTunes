@@ -33,7 +33,7 @@ export function PlayerControls() {
     seekTo,
   } = usePlayerStore();
 
-  const { nextTrack, previousTrack, toggleShuffle, isShuffled, queue } = usePlaylistStore();
+  const { nextTrack, previousTrack, toggleShuffle, isShuffled } = usePlaylistStore();
 
   const handlePrevious = () => {
     if (progress > 3) {
@@ -44,21 +44,15 @@ export function PlayerControls() {
   };
 
   const VolumeIcon = isMuted || volume === 0 ? VolumeX : volume < 50 ? Volume1 : Volume2;
-
   const RepeatIcon = repeatMode === 'one' ? Repeat1 : Repeat;
-  const repeatActive = repeatMode !== 'off';
 
   return (
-    <div className="border border-terminal-border bg-terminal-bg p-3 space-y-3">
+    <div className="border border-terminal-border bg-terminal-bg p-2 space-y-2">
       {/* Progress bar */}
-      <ProgressBar
-        progress={progress}
-        duration={duration}
-        onSeek={seekTo}
-      />
+      <ProgressBar progress={progress} duration={duration} onSeek={seekTo} />
 
       {/* Time display */}
-      <div className="flex justify-between font-mono text-xs text-terminal-muted">
+      <div className="flex justify-between font-mono text-[10px] text-terminal-muted">
         <span>{formatTime(progress)}</span>
         <span>{formatTime(duration)}</span>
       </div>
@@ -66,88 +60,63 @@ export function PlayerControls() {
       {/* Controls */}
       <div className="flex items-center justify-between">
         {/* Left controls */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
           <button
             onClick={toggleShuffle}
-            className={`p-2 rounded hover:bg-terminal-hover transition-colors ${
-              isShuffled ? 'text-terminal-accent' : 'text-terminal-muted'
-            }`}
-            aria-label="Toggle shuffle"
-            disabled={queue.length === 0}
+            className={`p-1.5 ${isShuffled ? 'text-terminal-accent' : 'text-terminal-muted'}`}
           >
-            <Shuffle className="w-4 h-4" />
+            <Shuffle className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={cycleRepeatMode}
-            className={`p-2 rounded hover:bg-terminal-hover transition-colors ${
-              repeatActive ? 'text-terminal-accent' : 'text-terminal-muted'
-            }`}
-            aria-label={`Repeat: ${repeatMode}`}
+            className={`p-1.5 ${repeatMode !== 'off' ? 'text-terminal-accent' : 'text-terminal-muted'}`}
           >
-            <RepeatIcon className="w-4 h-4" />
+            <RepeatIcon className="w-3.5 h-3.5" />
           </button>
         </div>
 
         {/* Center controls */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1">
           <button
             onClick={handlePrevious}
-            className="p-2 rounded hover:bg-terminal-hover transition-colors text-terminal-text disabled:opacity-50"
-            aria-label="Previous track"
             disabled={!currentTrack}
+            className="p-1.5 text-terminal-text disabled:opacity-40"
           >
-            <SkipBack className="w-5 h-5" />
+            <SkipBack className="w-4 h-4" />
           </button>
           <button
             onClick={togglePlay}
-            className="p-3 rounded-full border-2 border-terminal-accent bg-terminal-accent/10 hover:bg-terminal-accent/20 transition-colors text-terminal-accent disabled:opacity-50"
-            aria-label={isPlaying ? 'Pause' : 'Play'}
             disabled={!currentTrack}
+            className="p-2 border border-terminal-accent text-terminal-accent disabled:opacity-40"
           >
-            {isPlaying ? (
-              <Pause className="w-6 h-6" />
-            ) : (
-              <Play className="w-6 h-6 ml-0.5" />
-            )}
+            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
           </button>
           <button
             onClick={() => nextTrack()}
-            className="p-2 rounded hover:bg-terminal-hover transition-colors text-terminal-text disabled:opacity-50"
-            aria-label="Next track"
             disabled={!currentTrack}
+            className="p-1.5 text-terminal-text disabled:opacity-40"
           >
-            <SkipForward className="w-5 h-5" />
+            <SkipForward className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Right controls - Volume */}
-        <div className="flex items-center gap-2">
-          <button
-            onClick={toggleMute}
-            className="p-2 rounded hover:bg-terminal-hover transition-colors text-terminal-muted"
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
-          >
-            <VolumeIcon className="w-4 h-4" />
+        {/* Right controls */}
+        <div className="flex items-center gap-1">
+          <button onClick={toggleMute} className="p-1.5 text-terminal-muted">
+            <VolumeIcon className="w-3.5 h-3.5" />
           </button>
-          <div className="hidden sm:block w-20">
-            <VolumeSlider
-              volume={isMuted ? 0 : volume}
-              onChange={setVolume}
-            />
+          <div className="hidden sm:block w-16">
+            <VolumeSlider volume={isMuted ? 0 : volume} onChange={setVolume} />
           </div>
         </div>
       </div>
 
       {/* Track info */}
       {currentTrack && (
-        <div className="text-center border-t border-terminal-border pt-3">
-          <div className="font-mono text-sm text-terminal-text truncate">
-            {currentTrack.title}
-          </div>
+        <div className="text-center border-t border-terminal-border pt-2">
+          <div className="font-mono text-xs text-terminal-text truncate">{currentTrack.title}</div>
           {currentTrack.artist && (
-            <div className="font-mono text-xs text-terminal-accent truncate">
-              {currentTrack.artist}
-            </div>
+            <div className="font-mono text-[10px] text-terminal-accent truncate">{currentTrack.artist}</div>
           )}
         </div>
       )}

@@ -111,45 +111,35 @@ export function Player() {
 
   return (
     <TerminalWindow 
-      title={currentTrack ? `♪ ${currentTrack.title}` : '♪ NO TRACK LOADED'}
+      title={currentTrack ? `♪ ${currentTrack.title}` : '♪ NO TRACK'}
       className="h-full"
     >
-      <div className="relative aspect-video w-full bg-black">
+      <div className="player-container">
         {currentTrack ? (
           <>
-            <YouTube
-              videoId={currentTrack.youtubeId}
-              opts={YOUTUBE_PLAYER_OPTIONS}
-              onReady={onReady}
-              onStateChange={onStateChange}
-              onError={onError}
-              className="absolute inset-0 w-full h-full"
-              iframeClassName="w-full h-full"
-            />
+            <div>
+              <YouTube
+                videoId={currentTrack.youtubeId}
+                opts={YOUTUBE_PLAYER_OPTIONS}
+                onReady={onReady}
+                onStateChange={onStateChange}
+                onError={onError}
+                className="w-full h-full"
+                iframeClassName="w-full h-full"
+              />
+            </div>
             {isLoading && (
-              <div className="absolute inset-0 bg-black/80 flex items-center justify-center">
+              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
                 <Loading text="Buffering" />
               </div>
             )}
-            {/* Track info overlay */}
-            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-              <div className="font-mono text-xs text-white/80 truncate">
-                {currentTrack.artist && (
-                  <span className="text-terminal-accent">{currentTrack.artist} - </span>
-                )}
-                {currentTrack.title}
-              </div>
-              <div className="font-mono text-xs text-white/50">
-                Track {queueIndex + 1} of {queue.length}
-              </div>
-            </div>
           </>
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center">
+          <div className="absolute inset-0 flex items-center justify-center bg-terminal-bg-secondary">
             <div className="text-center">
-              <div className="font-mono text-terminal-muted text-4xl mb-4">▶</div>
-              <p className="font-mono text-sm text-terminal-muted">
-                Select a genre to start playing
+              <div className="font-mono text-terminal-muted text-3xl mb-2">▶</div>
+              <p className="font-mono text-xs text-terminal-muted">
+                Select a genre to start
               </p>
             </div>
           </div>

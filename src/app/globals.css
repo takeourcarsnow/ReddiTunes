@@ -53,23 +53,23 @@
   box-sizing: border-box;
 }
 
-html {
-  scroll-behavior: smooth;
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
 body {
   font-family: 'Courier New', Courier, monospace;
   background-color: var(--terminal-bg);
   color: var(--terminal-text);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
 /* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 
 ::-webkit-scrollbar-track {
@@ -78,7 +78,6 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--terminal-border);
-  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -100,21 +99,12 @@ body {
 /* Focus styles */
 :focus-visible {
   outline: 1px solid var(--terminal-accent);
-  outline-offset: 2px;
+  outline-offset: 1px;
 }
 
-/* Terminal text effects */
+/* Terminal glow - reduced */
 .terminal-glow {
-  text-shadow: 0 0 10px var(--terminal-accent);
-}
-
-.terminal-flicker {
-  animation: flicker 0.15s infinite;
-}
-
-@keyframes flicker {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.8; }
+  text-shadow: 0 0 5px var(--terminal-accent);
 }
 
 /* YouTube iframe styling */
@@ -122,49 +112,24 @@ iframe {
   border: none;
 }
 
-/* Responsive typography */
-@media (max-width: 640px) {
-  html {
-    font-size: 14px;
-  }
+/* Player container - fixed aspect ratio */
+.player-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000;
+  overflow: hidden;
 }
 
-/* Animation utilities */
-.animate-fade-in {
-  animation: fadeIn 0.3s ease-in-out;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.animate-slide-up {
-  animation: slideUp 0.3s ease-out;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Winamp-style button press effect */
-.btn-press:active {
-  transform: translateY(1px);
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+.player-container > div {
+  position: absolute;
+  inset: 0;
 }
 
 /* Glass effect */
 .glass {
   background: rgba(10, 10, 15, 0.8);
   backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
 }
 
 .light .glass {

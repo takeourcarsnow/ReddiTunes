@@ -1,116 +1,57 @@
 'use client';
 
-import { useEffect, useState, useCallback, useRef } from 'react';
-import { VISUALIZER_CHARS } from '@/constants/ascii';
+import { useEffect, useState, useRef } from 'react';
 import { usePlayerStore } from '@/stores';
 
 interface VisualizerProps {
   barCount?: number;
-  className?: string;
 }
 
-export function Visualizer({ barCount = 32, className = '' }: VisualizerProps) {
+export function Visualizer({ barCount = 24 }: VisualizerProps) {
   const { isPlaying } = usePlayerStore();
   const [bars, setBars] = useState<number[]>(() => Array(barCount).fill(0));
   const animationRef = useRef<number | null>(null);
-  const lastUpdateRef = useRef<number>(0);
-
-  const animate = useCallback((timestamp: number) => {
-    // Throttle updates to ~30fps
-    if (timestamp - lastUpdateRef.current < 33) {
-      animationRef.current = requestAnimationFrame(animate);
-      return;
-    }
-    lastUpdateRef.current = timestamp;
-
-    if (isPlaying) {
-      setBars((prev) =>
-        prev.map((bar, index) => {
-          // Create wave-like movement with some randomness
-          const wave = Math.sin(timestamp / 200 + index * 0.3) * 0.5 + 0.5;
-          const random = Math.random() * 0.3;
-          const target = wave + random;
-          // Smooth transition
-          return bar + (target - bar) * 0.3;
-        })
-      );
-    } else {
-      // Decay when paused
-      setBars((prev) =>
-        prev.map((bar) => Math.max(0, bar - 0.05))
-      );
-    }
-
-    animationRef.current = requestAnimationFrame(animate);
-  }, [isPlaying]);
 
   useEffect(() => {
+    let lastTime = 0;
+    
+    const animate = (time: number) => {
+      if (time - lastTime < 100) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastTime = time;
+
+      if (isPlaying) {
+        setBars(prev => prev.map((_, i) => {
+          const wave = Math.sin(time / 300 + i * 0.4) * 0.4 + 0.5;
+          return wave + Math.random() * 0.2;
+        }));
+      } else {
+        setBars(prev => prev.map(b => Math.max(0, b - 0.1)));
+      }
+      
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
     animationRef.current = requestAnimationFrame(animate);
     return () => {
-      if (animationRef.current) {
-        cancelAnimationFrame(animationRef.current);
-      }
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
     };
-  }, [animate]);
-
-  const getBarChar = (value: number): string => {
-    const index = Math.min(
-      Math.floor(value * VISUALIZER_CHARS.length),
-      VISUALIZER_CHARS.length - 1
-    );
-    return VISUALIZER_CHARS[Math.max(0, index)];
-  };
+  }, [isPlaying]);
 
   return (
-    <div className={`font-mono flex items-end justify-center gap-px ${className}`}>
-      {bars.map((bar, index) => (
-        <span
-          key={index}
-          className="text-terminal-accent transition-all duration-75"
+    <div className="flex items-end justify-center gap-0.5 h-6">
+      {bars.map((bar, i) => (
+        <div
+          key={i}
+          className="w-1 bg-terminal-accent"
           style={{
-            opacity: isPlaying ? 0.4 + bar * 0.6 : 0.2,
+            height: `${Math.max(2, bar * 100)}%`,
+            opacity: isPlaying ? 0.5 + bar * 0.5 : 0.2,
           }}
-        >
-          {getBarChar(bar)}
-        </span>
+        />
       ))}
     </div>
-  );
-}
-
-export function MiniVisualizer({ barCount = 8 }: { barCount?: number }) {
-  const { isPlaying } = usePlayerStore();
-  const [bars, setBars] = useState<number[]>(() => Array(barCount).fill(0));
-
-  useEffect(() => {
-    if (!isPlaying) {
-      setBars(Array(barCount).fill(0));
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setBars(
-        Array(barCount)
-          .fill(0)
-          .map(() => Math.random())
-      );
-    }, 150);
-
-    return () => clearInterval(interval);
-  }, [isPlaying, barCount]);
-
-  const getBarChar = (value: number): string => {
-    const index = Math.floor(value * VISUALIZER_CHARS.length);
-    return VISUALIZER_CHARS[Math.min(index, VISUALIZER_CHARS.length - 1)];
-  };
-
-  return (
-    <span className="font-mono text-terminal-accent">
-      {bars.map((bar, i) => (
-        <span key={i} style={{ opacity: isPlaying ? 0.5 + bar * 0.5 : 0.3 }}>
-          {getBarChar(bar)}
-        </span>
-      ))}
-    </span>
   );
 }

@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { usePlaylistStore, usePlayerStore } from '@/stores';
 import { TerminalWindow } from '@/components/terminal';
 import { PlaylistItem } from './PlaylistItem';
 import { Loading } from '@/components/ui';
-import { ListMusic, Trash2, RefreshCw } from 'lucide-react';
+import { ListMusic, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
 
 export function Playlist() {
   const {
@@ -22,29 +22,31 @@ export function Playlist() {
 
   const { setCurrentTrack, currentTrack } = usePlayerStore();
   const activeItemRef = useRef<HTMLDivElement>(null);
+  const [currentPage, setCurrentPage] = useState(0);
 
-  // Auto-scroll to active track
+  const TRACKS_PER_PAGE = 5;
+  const totalPages = Math.ceil(queue.length / TRACKS_PER_PAGE);
+  const startIndex = currentPage * TRACKS_PER_PAGE;
+  const visibleTracks = queue.slice(startIndex, startIndex + TRACKS_PER_PAGE);
+
+  // Auto-switch page when track changes
   useEffect(() => {
-    if (activeItemRef.current) {
-      activeItemRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-      });
+    if (queueIndex >= 0 && queue.length > 0) {
+      const trackPage = Math.floor(queueIndex / TRACKS_PER_PAGE);
+      if (trackPage !== currentPage) setCurrentPage(trackPage);
     }
-  }, [queueIndex]);
+  }, [queueIndex, queue.length, currentPage]);
 
-  // Auto-set current track when queue changes
+  // Auto-set current track
   useEffect(() => {
     if (queue.length > 0 && !currentTrack) {
       setCurrentTrack(queue[0]);
     }
+    setCurrentPage(0);
   }, [queue, currentTrack, setCurrentTrack]);
 
-  // Update current track when queue index changes
   useEffect(() => {
-    if (queue[queueIndex]) {
-      setCurrentTrack(queue[queueIndex]);
-    }
+    if (queue[queueIndex]) setCurrentTrack(queue[queueIndex]);
   }, [queueIndex, queue, setCurrentTrack]);
 
   const handlePlayTrack = (index: number) => {
@@ -52,39 +54,23 @@ export function Playlist() {
     setCurrentTrack(queue[index]);
   };
 
-  const handleRemoveTrack = (trackId: string) => {
-    removeTrackFromQueue(trackId);
-  };
-
-  const handleRefresh = () => {
-    if (activePlaylist) {
-      refreshPlaylist(activePlaylist.id);
-    }
-  };
-
   return (
     <TerminalWindow
-      title={
-        activePlaylist
-          ? `[QUEUE] ${activePlaylist.name} (${queue.length} tracks)${isShuffled ? ' [SHUFFLED]' : ''}`
-          : '[QUEUE] No playlist loaded'
-      }
+      title={`[QUEUE] ${queue.length} tracks${isShuffled ? ' [S]' : ''}`}
       className="h-full flex flex-col"
       headerActions={
         queue.length > 0 && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-0.5">
             <button
-              onClick={handleRefresh}
+              onClick={() => activePlaylist && refreshPlaylist(activePlaylist.id)}
               disabled={isLoading || !activePlaylist}
-              className="p-1 hover:bg-terminal-hover text-terminal-muted hover:text-terminal-accent transition-colors disabled:opacity-50"
-              title="Refresh playlist"
+              className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
             >
               <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
             </button>
             <button
               onClick={clearQueue}
-              className="p-1 hover:bg-terminal-hover text-terminal-muted hover:text-red-400 transition-colors"
-              title="Clear queue"
+              className="p-0.5 text-terminal-muted hover:text-red-400"
             >
               <Trash2 className="w-3 h-3" />
             </button>
@@ -94,52 +80,54 @@ export function Playlist() {
     >
       <div className="flex-1 overflow-y-auto">
         {isLoading ? (
-          <div className="p-8 flex items-center justify-center">
-            <Loading text="Loading tracks" />
+          <div className="p-4 flex justify-center">
+            <Loading text="Loading" />
           </div>
         ) : queue.length === 0 ? (
-          <div className="p-8 text-center">
-            <ListMusic className="w-12 h-12 mx-auto mb-4 text-terminal-muted" />
-            <p className="font-mono text-sm text-terminal-muted">
-              No tracks in queue
-            </p>
-            <p className="font-mono text-xs text-terminal-muted mt-2">
-              Select a genre to generate a playlist
-            </p>
+          <div className="p-4 text-center">
+            <ListMusic className="w-8 h-8 mx-auto mb-2 text-terminal-muted" />
+            <p className="font-mono text-xs text-terminal-muted">No tracks</p>
           </div>
         ) : (
           <div>
-            {queue.map((track, index) => (
-              <div
-                key={track.id}
-                ref={index === queueIndex ? activeItemRef : undefined}
-              >
-                <PlaylistItem
-                  track={track}
-                  index={index}
-                  isActive={index === queueIndex}
-                  onPlay={() => handlePlayTrack(index)}
-                  onRemove={() => handleRemoveTrack(track.id)}
-                />
-              </div>
-            ))}
+            {visibleTracks.map((track, index) => {
+              const globalIndex = startIndex + index;
+              return (
+                <div key={track.id} ref={globalIndex === queueIndex ? activeItemRef : undefined}>
+                  <PlaylistItem
+                    track={track}
+                    index={globalIndex}
+                    isActive={globalIndex === queueIndex}
+                    onPlay={() => handlePlayTrack(globalIndex)}
+                    onRemove={() => removeTrackFromQueue(track.id)}
+                  />
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* Queue stats */}
-      {queue.length > 0 && (
-        <div className="border-t border-terminal-border p-2 font-mono text-xs text-terminal-muted">
-          <div className="flex justify-between">
-            <span>
-              Track {queueIndex + 1} of {queue.length}
-            </span>
-            {activePlaylist && (
-              <span className="text-terminal-accent">
-                r/{activePlaylist.subreddit}
-              </span>
-            )}
-          </div>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="border-t border-terminal-border p-1.5 flex items-center justify-between">
+          <button
+            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
+            disabled={currentPage === 0}
+            className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
+          >
+            <ChevronLeft className="w-4 h-4" />
+          </button>
+          <span className="font-mono text-[10px] text-terminal-muted">
+            {currentPage + 1}/{totalPages}
+          </span>
+          <button
+            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
+            disabled={currentPage === totalPages - 1}
+            className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
+          >
+            <ChevronRight className="w-4 h-4" />
+          </button>
         </div>
       )}
     </TerminalWindow>

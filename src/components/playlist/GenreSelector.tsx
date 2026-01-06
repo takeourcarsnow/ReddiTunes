@@ -6,7 +6,7 @@ import { usePlaylistStore } from '@/stores';
 import { Genre, SortOption, TimeFilter } from '@/types';
 import { TerminalWindow } from '@/components/terminal';
 import { Button, Loading } from '@/components/ui';
-import { ChevronDown, Radio, Sparkles } from 'lucide-react';
+import { ChevronDown, Radio } from 'lucide-react';
 
 export function GenreSelector() {
   const {
@@ -23,59 +23,39 @@ export function GenreSelector() {
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
-  const visibleGenres = showAllGenres ? GENRES : GENRES.slice(0, 8);
+  const visibleGenres = showAllGenres ? GENRES : GENRES.slice(0, 6);
 
   const handleGenreSelect = (genre: Genre) => {
     setSelectedGenre(genre);
     generatePlaylist(genre);
   };
 
-  const handleGenerateWithOptions = () => {
-    if (selectedGenre) {
-      generatePlaylist(selectedGenre, sortOption, timeFilter);
-    }
-  };
-
   return (
-    <TerminalWindow
-      title="[SELECT GENRE] - r/subreddit radio"
-      className="h-full"
-    >
-      <div className="p-3 space-y-4 h-full overflow-y-auto">
+    <TerminalWindow title="[GENRES]" className="h-full">
+      <div className="p-2 space-y-2 h-full overflow-y-auto">
         {/* Header */}
         <div className="flex items-center gap-2 text-terminal-accent">
-          <Radio className="w-4 h-4" />
-          <span className="font-mono text-sm">
-            Generate playlist from subreddit
-          </span>
+          <Radio className="w-3 h-3" />
+          <span className="font-mono text-xs">Select subreddit</span>
         </div>
 
         {/* Sort options toggle */}
         <button
           onClick={() => setShowOptions(!showOptions)}
-          className="w-full flex items-center justify-between p-2 border border-terminal-border hover:border-terminal-accent transition-colors font-mono text-xs"
+          className="w-full flex items-center justify-between p-1.5 border border-terminal-border hover:border-terminal-accent font-mono text-[10px]"
         >
           <span className="text-terminal-muted">
             Sort: <span className="text-terminal-text">{sortOption}</span>
-            {sortOption === 'top' && (
-              <span className="text-terminal-muted ml-1">({timeFilter})</span>
-            )}
+            {sortOption === 'top' && <span className="ml-1">({timeFilter})</span>}
           </span>
-          <ChevronDown
-            className={`w-4 h-4 text-terminal-muted transition-transform ${
-              showOptions ? 'rotate-180' : ''
-            }`}
-          />
+          <ChevronDown className={`w-3 h-3 text-terminal-muted ${showOptions ? 'rotate-180' : ''}`} />
         </button>
 
         {/* Options panel */}
         {showOptions && (
-          <div className="border border-terminal-border p-3 space-y-3">
-            {/* Sort options */}
+          <div className="border border-terminal-border p-2 space-y-2">
             <div>
-              <label className="font-mono text-xs text-terminal-muted block mb-2">
-                Sort by:
-              </label>
+              <label className="font-mono text-[10px] text-terminal-muted block mb-1">Sort:</label>
               <div className="flex flex-wrap gap-1">
                 {SORT_OPTIONS.map((option) => (
                   <Button
@@ -89,13 +69,9 @@ export function GenreSelector() {
                 ))}
               </div>
             </div>
-
-            {/* Time filter (only for 'top' sort) */}
             {sortOption === 'top' && (
               <div>
-                <label className="font-mono text-xs text-terminal-muted block mb-2">
-                  Time range:
-                </label>
+                <label className="font-mono text-[10px] text-terminal-muted block mb-1">Time:</label>
                 <div className="flex flex-wrap gap-1">
                   {TIME_FILTERS.map((filter) => (
                     <Button
@@ -110,83 +86,68 @@ export function GenreSelector() {
                 </div>
               </div>
             )}
-
-            {/* Apply button */}
             {selectedGenre && (
               <Button
-                onClick={handleGenerateWithOptions}
+                onClick={() => generatePlaylist(selectedGenre, sortOption, timeFilter)}
                 disabled={isLoading}
                 variant="primary"
                 className="w-full"
               >
-                <Sparkles className="w-4 h-4 mr-2" />
-                Regenerate {selectedGenre.name}
+                Regenerate
               </Button>
             )}
           </div>
         )}
 
-        {/* Loading state */}
+        {/* Loading */}
         {isLoading && (
-          <div className="py-4">
-            <Loading text="Fetching tracks from Reddit" />
+          <div className="py-3">
+            <Loading text="Fetching tracks" />
           </div>
         )}
 
-        {/* Error state */}
+        {/* Error */}
         {error && (
-          <div className="p-3 border border-red-500 bg-red-500/10 font-mono text-xs text-red-400">
-            ERROR: {error}
+          <div className="p-2 border border-red-500 bg-red-500/10 font-mono text-[10px] text-red-400">
+            {error}
           </div>
         )}
 
         {/* Genre grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-2 gap-2">
+        <div className="grid grid-cols-2 gap-1.5">
           {visibleGenres.map((genre) => (
             <button
               key={genre.id}
               onClick={() => handleGenreSelect(genre)}
               disabled={isLoading}
-              className={`p-3 border text-left transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed ${
+              className={`p-2 border text-left disabled:opacity-50 ${
                 selectedGenre?.id === genre.id
                   ? 'border-terminal-accent bg-terminal-accent/10'
                   : 'border-terminal-border hover:border-terminal-accent'
               }`}
             >
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">{genre.icon}</span>
-                <span
-                  className="font-mono text-sm font-bold"
-                  style={{ color: genre.color }}
-                >
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="text-sm">{genre.icon}</span>
+                <span className="font-mono text-xs font-bold" style={{ color: genre.color }}>
                   {genre.name}
                 </span>
               </div>
-              <div className="font-mono text-xs text-terminal-muted truncate">
+              <div className="font-mono text-[10px] text-terminal-muted truncate">
                 r/{genre.subreddit}
               </div>
             </button>
           ))}
         </div>
 
-        {/* Show more button */}
-        {GENRES.length > 8 && (
+        {/* Show more */}
+        {GENRES.length > 6 && (
           <button
             onClick={() => setShowAllGenres(!showAllGenres)}
-            className="w-full py-2 font-mono text-xs text-terminal-muted hover:text-terminal-accent transition-colors"
+            className="w-full py-1 font-mono text-[10px] text-terminal-muted hover:text-terminal-accent"
           >
-            {showAllGenres ? '▲ Show less' : `▼ Show all (${GENRES.length} genres)`}
+            {showAllGenres ? '▲ Less' : `▼ More (${GENRES.length})`}
           </button>
         )}
-
-        {/* Info */}
-        <div className="border-t border-terminal-border pt-3">
-          <p className="font-mono text-xs text-terminal-muted leading-relaxed">
-            <span className="text-terminal-accent">TIP:</span> Click a genre to fetch
-            YouTube links from that subreddit. The player will automatically start
-            playing the first track.
-          </p>
-        </div>
       </div>
     </TerminalWindow>
   );

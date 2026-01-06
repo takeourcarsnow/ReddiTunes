@@ -24,10 +24,10 @@ export function TerminalWindow({
   return (
     <div className={`border border-terminal-border bg-terminal-bg flex flex-col ${className}`}>
       {/* Title bar */}
-      <div className="flex items-center justify-between px-2 py-1 border-b border-terminal-border bg-terminal-header">
-        <div className="flex items-center gap-2">
+      <div className="flex items-center justify-between px-2 py-1 border-b border-terminal-border bg-terminal-header min-h-[28px]">
+        <div className="flex items-center gap-2 flex-1 min-w-0">
           {(onClose || onMinimize || onMaximize) && (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-shrink-0">
               {onClose && (
                 <button
                   onClick={onClose}
@@ -60,7 +60,7 @@ export function TerminalWindow({
           <span className="font-mono text-xs text-terminal-muted truncate">{title}</span>
         </div>
         {headerActions && (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-shrink-0">
             {headerActions}
           </div>
         )}
