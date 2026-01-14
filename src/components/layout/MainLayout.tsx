@@ -1,40 +1,31 @@
 'use client';
 
-import { Player } from '@/components/player';
-import { GenreSelector, Playlist, PlaylistHistory } from '@/components/playlist';
+import { GenreSelector, Playlist, PlaylistHistory, Favorites } from '@/components/playlist';
 import { TerminalHeader } from '@/components/terminal';
 import { HelpModal, useHelpModal } from '@/components/ui';
 import { KeyboardShortcutsProvider } from '@/hooks';
 import { useState, useEffect } from 'react';
-import { List, Radio as RadioIcon, History, HelpCircle, Github } from 'lucide-react';
+import { List, Star, History, HelpCircle, Github, Music } from 'lucide-react';
+import { Player } from '@/components/player';
 
-type MobileTab = 'player' | 'genres' | 'queue' | 'history';
+type MobileTab = 'genres' | 'queue' | 'history' | 'favorites';
 
 export function MainLayout() {
-  const [mobileTab, setMobileTab] = useState<MobileTab>('player');
+  const [mobileTab, setMobileTab] = useState<MobileTab>('genres');
   const helpModal = useHelpModal();
 
   const tabs: { id: MobileTab; icon: React.ReactNode; label: string }[] = [
-    { id: 'player', icon: <RadioIcon className="w-4 h-4" />, label: 'Player' },
-    { id: 'genres', icon: <RadioIcon className="w-4 h-4" />, label: 'Genres' },
+    { id: 'genres', icon: <Music className="w-4 h-4" />, label: 'Genres' },
     { id: 'queue', icon: <List className="w-4 h-4" />, label: 'Queue' },
     { id: 'history', icon: <History className="w-4 h-4" />, label: 'History' },
+    { id: 'favorites', icon: <Star className="w-4 h-4" />, label: 'Favorites' },
   ];
 
-  const [activeLayout, setActiveLayout] = useState<'desktop' | 'tablet' | 'mobile'>('desktop');
+  const [activeLayout, setActiveLayout] = useState<'desktop' | 'tablet' | 'mobile'>('mobile');
 
-  // Detect current breakpoint so we only render a single Player instance
+  // Always use mobile layout
   useEffect(() => {
-    const update = () => {
-      const w = window.innerWidth;
-      if (w >= 1024) setActiveLayout('desktop');
-      else if (w >= 768) setActiveLayout('tablet');
-      else setActiveLayout('mobile');
-    };
-
-    update();
-    window.addEventListener('resize', update);
-    return () => window.removeEventListener('resize', update);
+    setActiveLayout('mobile');
   }, []);
 
   return (
@@ -43,21 +34,23 @@ export function MainLayout() {
         <TerminalHeader />
 
         {/* Desktop Layout (lg+) */}
-        <main className="hidden lg:grid flex-1 min-h-0 grid-cols-[280px_1fr_280px]">
+        <main className="hidden grid flex-1 min-h-0 grid-cols-[280px_1fr_280px]">
           {/* Left sidebar */}
           <div className="border-r border-terminal-border flex flex-col min-h-0">
             <div className="flex-1 p-3 overflow-auto">
               <GenreSelector />
             </div>
-            <div className="border-t border-terminal-border p-3 h-48 overflow-auto">
+            <div className="border-t border-terminal-border p-3 h-48 overflow-auto flex flex-col gap-2">
               <PlaylistHistory />
+              <Favorites />
             </div>
           </div>
 
           {/* Main content */}
           <div className="flex flex-col min-h-0 p-3 gap-3">
             <div className="flex-1 min-h-0">
-              {activeLayout === 'desktop' && <Player />}
+              {/* Center: Player for desktop/tablet */}
+              {activeLayout !== 'mobile' && <Player />}
             </div>
           </div>
 
@@ -68,10 +61,11 @@ export function MainLayout() {
         </main>
 
         {/* Tablet Layout (md to lg) */}
-        <main className="hidden md:grid lg:hidden flex-1 min-h-0 grid-cols-[1fr_280px]">
+        <main className="hidden grid flex-1 min-h-0 grid-cols-[1fr_280px]">
           {/* Left - Player */}
           <div className="flex flex-col min-h-0 p-3 gap-3">
             <div className="flex-1 min-h-0">
+              {/* Tablet: show Player */}
               {activeLayout === 'tablet' && <Player />}
             </div>
           </div>
@@ -88,18 +82,22 @@ export function MainLayout() {
         </main>
 
         {/* Mobile Layout */}
-        <main className="flex-1 md:hidden flex flex-col min-h-0">
+        <main className="flex-1 flex flex-col min-h-0">
           <div className="flex-1 p-3 overflow-auto min-h-0">
-            {mobileTab === 'player' && (
-              <div className="flex flex-col gap-3 h-full">
-                <div className="flex-1 min-h-0">
-                  {activeLayout === 'mobile' && <Player />}
-                </div>
+            <div className={`flex flex-col gap-3 h-full`}>
+              {/* Player at the top on mobile, visible across tabs */}
+              <div className="h-48 min-h-0">
+                {activeLayout === 'mobile' && <Player />}
               </div>
-            )}
-            {mobileTab === 'genres' && <GenreSelector />}
-            {mobileTab === 'queue' && <Playlist />}
-            {mobileTab === 'history' && <PlaylistHistory />}
+
+              {/* Render the tab content (only one will show) */}
+              <div className="flex-1 overflow-auto">
+                {mobileTab === 'genres' && <GenreSelector />}
+                {mobileTab === 'queue' && <Playlist />}
+                {mobileTab === 'history' && <PlaylistHistory />}
+                {mobileTab === 'favorites' && <Favorites />}
+              </div>
+            </div>
           </div>
 
           {/* Mobile Tab Bar */}
@@ -149,6 +147,7 @@ export function MainLayout() {
 
         <HelpModal isOpen={helpModal.isOpen} onClose={helpModal.close} />
       </div>
+
     </KeyboardShortcutsProvider>
   );
 }

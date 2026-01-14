@@ -36,6 +36,13 @@ export const PLAYER_STATES: YouTubePlayerState = {
   CUED: 5,
 };
 
+export const YOUTUBE_ERROR_CODES: Record<number, string> = {
+  2: 'INVALID_PARAM',
+  100: 'VIDEO_NOT_FOUND',
+  101: 'EMBEDDING_NOT_ALLOWED',
+  150: 'EMBEDDING_NOT_ALLOWED',
+};
+
 export function getVideoUrl(videoId: string): string {
   return `https://www.youtube.com/watch?v=${videoId}`;
 }

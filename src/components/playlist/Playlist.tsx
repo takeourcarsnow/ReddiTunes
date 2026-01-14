@@ -20,7 +20,7 @@ export function Playlist() {
     isShuffled,
   } = usePlaylistStore();
 
-  const { setCurrentTrack, currentTrack } = usePlayerStore();
+  const { setCurrentTrack, currentTrack, setIsPlaying } = usePlayerStore();
   const activeItemRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
@@ -74,9 +74,10 @@ export function Playlist() {
   }, [totalPages]);
 
   const handlePlayTrack = (index: number) => {
-    // Only set queue index - the effect will handle setting current track
+    // Set queue index and request playback
     setQueueIndex(index);
-  };
+    setIsPlaying(true);
+  }; 
 
   return (
     <TerminalWindow

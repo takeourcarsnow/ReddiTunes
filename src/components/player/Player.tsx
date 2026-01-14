@@ -3,12 +3,12 @@
 import { useCallback, useRef, useEffect } from 'react';
 import YouTube, { YouTubeEvent, YouTubePlayer } from 'react-youtube';
 import { usePlayerStore, usePlaylistStore } from '@/stores';
-import { YOUTUBE_PLAYER_OPTIONS, PLAYER_STATES } from '@/lib/youtube';
+import { YOUTUBE_PLAYER_OPTIONS, PLAYER_STATES, YOUTUBE_ERROR_CODES } from '@/lib/youtube';
 import { TerminalWindow } from '@/components/terminal';
 import { Loading } from '@/components/ui';
 
-export function Player() {
-  const { currentTrack, isLoading, setIsLoading, repeatMode } = usePlayerStore();
+export function Player({ compact = false }: { compact?: boolean }) {
+  const { currentTrack, isLoading, setIsLoading, repeatMode, isPlaying } = usePlayerStore();
   const { nextTrack } = usePlaylistStore();
   const playerRef = useRef<YouTubePlayer | null>(null);
   const currentTrackIdRef = useRef<string | null>(null);
@@ -27,7 +27,6 @@ export function Player() {
       currentTrackIdRef.current = null;
     };
   }, [currentTrack?.id]);
-
   const onReady = useCallback((event: YouTubeEvent) => {
     // Only set up the player if it matches the current track
     if (currentTrack?.id === currentTrackIdRef.current) {
@@ -35,7 +34,100 @@ export function Player() {
     }
     playerRef.current = event.target;
     currentTrackIdRef.current = currentTrack?.id || null;
-  }, [currentTrack?.id]);
+
+    // If user requested playback, try to play immediately
+    try {
+      if (playerRef.current && isPlaying) {
+        // playVideo may be blocked on some mobile browsers, but this is a best-effort
+        playerRef.current.playVideo();
+      }
+    } catch (e) {
+      console.warn('[Player] play onReady failed', e);
+    }
+  }, [currentTrack?.id, isPlaying]);
+
+  // When track changes or user requested play, attempt to start playback
+  useEffect(() => {
+    if (!currentTrack) return;
+    if (playerRef.current && isPlaying) {
+      try {
+        playerRef.current.playVideo();
+      } catch (e) {
+        console.warn('[Player] play on currentTrack change failed', e);
+      }
+    }
+  }, [currentTrack?.id, isPlaying]);
+
+  // Keep trying to resume playback while the page is backgrounded (some emulators/browsers pause audio)
+  const bgResumeInterval = useRef<number | null>(null);
+  useEffect(() => {
+    function startBgResume() {
+      if (bgResumeInterval.current != null) return;
+      bgResumeInterval.current = window.setInterval(() => {
+        if (playerRef.current && isPlaying) {
+          try {
+            playerRef.current.playVideo();
+          } catch (e) {
+            // Ignore - play can be blocked by browser policy
+          }
+        }
+      }, 1000);
+    }
+    function stopBgResume() {
+      if (bgResumeInterval.current != null) {
+        clearInterval(bgResumeInterval.current);
+        bgResumeInterval.current = null;
+      }
+    }
+
+    function onVisibilityChange() {
+      if (document.visibilityState === 'hidden') {
+        if (isPlaying) startBgResume();
+      } else {
+        stopBgResume();
+        if (isPlaying && playerRef.current) {
+          try {
+            playerRef.current.playVideo();
+          } catch (e) {
+            console.warn('[Player] resume after visibilitychange failed', e);
+          }
+        }
+      }
+    }
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    // If already hidden when mounted
+    if (document.visibilityState === 'hidden' && isPlaying) {
+      startBgResume();
+    }
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      stopBgResume();
+    };
+  }, [isPlaying]);
+
+  // Integrate Media Session (helps some platforms keep playback alive and provides controls)
+  useEffect(() => {
+    if ('mediaSession' in navigator) {
+      try {
+        // Update playback state
+        (navigator as any).mediaSession.playbackState = isPlaying ? 'playing' : 'paused';
+
+        // Set basic handlers
+        (navigator as any).mediaSession.setActionHandler?.('play', () => {
+          usePlayerStore.getState().setIsPlaying(true);
+          try { playerRef.current?.playVideo(); } catch {}
+        });
+        (navigator as any).mediaSession.setActionHandler?.('pause', () => {
+          usePlayerStore.getState().setIsPlaying(false);
+          try { playerRef.current?.pauseVideo(); } catch {}
+        });
+      } catch (e) {
+        // ignore if mediaSession not fully supported
+      }
+    }
+  }, [isPlaying]);
 
   const onStateChange = useCallback((event: YouTubeEvent) => {
     const state = event.data;
@@ -52,7 +144,32 @@ export function Player() {
         setIsLoading(true);
         break;
       case PLAYER_STATES.PLAYING:
+        setIsLoading(false);
+        // Log to played history when a track actually starts playing
+        try {
+          const current = usePlayerStore.getState().currentTrack;
+          if (current) {
+            const add = require('@/stores/historyStore').useHistoryStore.getState().addEntry;
+            add(current);
+          }
+        } catch (e) {
+          // ignore logging errors
+        }
+        break;
       case PLAYER_STATES.PAUSED:
+        setIsLoading(false);
+        // If the app believes it should be playing, try to resume immediately when visible.
+        if (isPlaying) {
+          if (!document.hidden) {
+            try {
+              event.target.playVideo();
+            } catch (e) {
+              console.warn('[Player] resume after pause failed', e);
+            }
+          }
+          // If hidden, the background resume interval will keep trying periodically.
+        }
+        break;
       case PLAYER_STATES.CUED:
         setIsLoading(false);
         break;
@@ -60,12 +177,50 @@ export function Player() {
   }, [repeatMode, nextTrack, setIsLoading]);
 
   const onError = useCallback((event: YouTubeEvent) => {
-    console.error('[Player] onError', event, 'for track:', currentTrack?.id);
+    const code = (event as any)?.data;
+    const reason = code ? (YOUTUBE_ERROR_CODES[code] ?? 'UNKNOWN_ERROR') : 'NO_CODE';
+    const trackId = currentTrackIdRef.current ?? currentTrack?.id ?? 'unknown';
+    console.error('[Player] onError', { code, reason }, 'for track:', trackId);
     setIsLoading(false);
     setTimeout(() => {
       nextTrack();
     }, 1000);
-  }, [setIsLoading, nextTrack, currentTrack?.id]);
+  }, [setIsLoading, nextTrack]);
+
+  if (compact) {
+    // Compact mini player UI for footer / small screens
+    return (
+      <div className="flex items-center gap-2 p-1">
+        {currentTrack ? (
+          <>
+            <div className="w-36 h-20 bg-black rounded overflow-hidden">
+              <YouTube
+                key={currentTrack.id}
+                videoId={currentTrack.youtubeId}
+                opts={{
+                  ...YOUTUBE_PLAYER_OPTIONS,
+                  width: 320,
+                  height: 180,
+                }}
+                onReady={onReady}
+                onStateChange={onStateChange}
+                onError={onError}
+                className="w-full h-full"
+                iframeClassName="w-full h-full"
+              />
+            </div>
+            <div className="min-w-0">
+              <div className="font-mono text-[11px] text-terminal-text truncate w-36">{currentTrack.title}</div>
+              <div className="font-mono text-[10px] text-terminal-muted truncate w-36">{currentTrack.artist || ''}</div>
+            </div>
+            {isLoading && <div className="text-xs text-terminal-muted">Buffering…</div>}
+          </>
+        ) : (
+          <div className="font-mono text-[10px] text-terminal-muted">No track</div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <TerminalWindow 

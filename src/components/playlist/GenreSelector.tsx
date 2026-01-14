@@ -6,6 +6,7 @@ import { usePlaylistStore } from '@/stores';
 import { Genre, SortOption, TimeFilter } from '@/types';
 import { TerminalWindow } from '@/components/terminal';
 import { Button, Loading } from '@/components/ui';
+import { usePlayerStore } from '@/stores';
 import { ChevronDown, Radio } from 'lucide-react';
 
 export function GenreSelector() {
@@ -19,16 +20,20 @@ export function GenreSelector() {
     setTimeFilter,
   } = usePlaylistStore();
 
-  const [showAllGenres, setShowAllGenres] = useState(false);
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
   const [showOptions, setShowOptions] = useState(false);
 
-  const visibleGenres = showAllGenres ? GENRES : GENRES.slice(0, 6);
+  // Always show all genres instantly
+  const visibleGenres = GENRES;
+
+  const { setIsPlaying } = usePlayerStore();
 
   const handleGenreSelect = (genre: Genre) => {
     setSelectedGenre(genre);
+    // Request generating playlist and start playback when available
     generatePlaylist(genre);
-  };
+    setIsPlaying(true);
+  }; 
 
   return (
     <TerminalWindow title="[GENRES]" className="h-full">
@@ -139,15 +144,7 @@ export function GenreSelector() {
           ))}
         </div>
 
-        {/* Show more */}
-        {GENRES.length > 6 && (
-          <button
-            onClick={() => setShowAllGenres(!showAllGenres)}
-            className="w-full py-1 font-mono text-[10px] text-terminal-muted hover:text-terminal-accent"
-          >
-            {showAllGenres ? '▲ Less' : `▼ More (${GENRES.length})`}
-          </button>
-        )}
+
       </div>
     </TerminalWindow>
   );

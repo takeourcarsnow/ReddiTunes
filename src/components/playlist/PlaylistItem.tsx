@@ -4,8 +4,9 @@ import { useState } from 'react';
 import { Track } from '@/types';
 import { usePlayerStore } from '@/stores';
 import { truncateText } from '@/lib/utils';
-import { Play, Pause, X, ExternalLink, MessageCircle } from 'lucide-react';
+import { Play, Pause, X, ExternalLink, MessageCircle, Star } from 'lucide-react';
 import { CommentsModal } from '@/components/ui';
+import { useFavoritesStore } from '@/stores';
 
 interface PlaylistItemProps {
   track: Track;
@@ -33,6 +34,26 @@ export function PlaylistItem({
   const handleCommentsClick = () => {
     setShowComments(true);
   };
+
+  function FavoriteButton({ track }: { track: Track }) {
+    const addFavorite = useFavoritesStore((s) => s.addFavorite);
+    const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
+    const isFav = useFavoritesStore((s) => s.isFavorite(track.id));
+
+    return (
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          if (isFav) removeFavorite(track.id);
+          else addFavorite(track);
+        }}
+        className={`p-0.5 hover:text-yellow-400 ${isFav ? 'text-yellow-400' : 'text-terminal-muted'}`}
+        title={isFav ? 'Remove from favorites' : 'Add to favorites'}
+      >
+        <Star className="w-3 h-3" fill={isFav ? "currentColor" : "none"} />
+      </button>
+    );
+  }
 
   return (
     <div
@@ -90,6 +111,9 @@ export function PlaylistItem({
             </button>
           </>
         )}
+
+        {/* Favorite toggle */}
+        <FavoriteButton track={track} />
 
         {/* Remove */}
         <button
