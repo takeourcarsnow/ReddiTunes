@@ -70,7 +70,8 @@ export async function fetchPlaylistFromSubreddit(
   subreddit: string,
   sort: SortOption = 'hot',
   timeFilter: TimeFilter = 'week',
-  maxTracks: number = 50
+  maxTracks: number = 50,
+  excludeIds: Set<string> = new Set()
 ): Promise<Track[]> {
   const tracks: Track[] = [];
   let after: string | undefined;
@@ -90,7 +91,12 @@ export async function fetchPlaylistFromSubreddit(
     
     for (const post of youtubePosts) {
       const track = convertPostToTrack(post);
-      if (track && !tracks.some((t) => t.youtubeId === track.youtubeId)) {
+      // Skip duplicates and any excluded youtube IDs (already queued)
+      if (
+        track &&
+        !tracks.some((t) => t.youtubeId === track.youtubeId) &&
+        !excludeIds.has(track.youtubeId)
+      ) {
         tracks.push(track);
         if (tracks.length >= maxTracks) break;
       }

@@ -41,6 +41,7 @@ interface PlaylistState {
   loadPlaylistToQueue: (playlist: Playlist) => void;
   deletePlaylist: (playlistId: string) => void;
   refreshPlaylist: (playlistId: string) => Promise<void>;
+  loadMoreTracks: (count?: number) => Promise<void>;
 }
 
 export const usePlaylistStore = create<PlaylistState>()(
@@ -66,11 +67,12 @@ export const usePlaylistStore = create<PlaylistState>()(
         set({ isLoading: true, error: null });
         
         try {
+          // Fetch a smaller initial set instead of 50
           const tracks = await fetchPlaylistFromSubreddit(
             genre.subreddit,
             sortOption,
             timeFilter,
-            50
+            20
           );
           
           if (tracks.length === 0) {
@@ -100,6 +102,46 @@ export const usePlaylistStore = create<PlaylistState>()(
             isLoading: false,
             error: error instanceof Error ? error.message : 'Failed to generate playlist',
           });
+        }
+      },
+
+      // Load more tracks (append to current playlist/queue)
+      loadMoreTracks: async (count = 20) => {
+        const state = get();
+        const playlist = state.activePlaylist;
+        if (!playlist) return;
+        set({ isLoading: true, error: null });
+        try {
+          const existingIds = new Set(state.originalQueue.map(t => t.youtubeId));
+          const more = await fetchPlaylistFromSubreddit(
+            playlist.subreddit,
+            state.sortOption,
+            state.timeFilter,
+            count,
+            existingIds
+          );
+
+          if (more.length === 0) {
+            // Nothing new found
+            set({ isLoading: false });
+            return;
+          }
+
+          const updatedPlaylist = {
+            ...playlist,
+            tracks: [...playlist.tracks, ...more],
+            lastUpdated: Date.now(),
+          };
+
+          set((s) => ({
+            playlists: s.playlists.map(p => p.id === playlist.id ? updatedPlaylist : p),
+            activePlaylist: updatedPlaylist,
+            queue: [...s.queue, ...more],
+            originalQueue: [...s.originalQueue, ...more],
+            isLoading: false,
+          }));
+        } catch (error) {
+          set({ isLoading: false, error: error instanceof Error ? error.message : 'Failed to load more tracks' });
         }
       },
 

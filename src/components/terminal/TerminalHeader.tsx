@@ -2,9 +2,13 @@
 
 import { ThemeToggle } from '@/components/ui';
 import { useEffect, useState } from 'react';
-import { Radio } from 'lucide-react';
+import { Radio, Globe, HelpCircle } from 'lucide-react';
 
-export function TerminalHeader() {
+interface TerminalHeaderProps {
+  onOpenHelp?: () => void;
+}
+
+export function TerminalHeader({ onOpenHelp }: TerminalHeaderProps) {
   const [time, setTime] = useState('');
 
   useEffect(() => {
@@ -31,6 +35,25 @@ export function TerminalHeader() {
         {/* Right side */}
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] text-terminal-muted hidden sm:block">{time}</span>
+
+          {/* External site */}
+          <button
+            onClick={() => window.open('https://nefas.tv', '_blank')}
+            className="flex items-center gap-1 hover:text-terminal-accent"
+            title="Visit nefas.tv"
+          >
+            <Globe className="w-3 h-3" />
+          </button>
+
+          {/* Help (opens modal) */}
+          <button
+            onClick={() => onOpenHelp?.()}
+            className="flex items-center gap-1 hover:text-terminal-accent"
+            title="Help"
+          >
+            <HelpCircle className="w-3 h-3" />
+          </button>
+
           <ThemeToggle />
         </div>
       </div>

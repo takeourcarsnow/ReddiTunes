@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePlaylistStore, usePlayerStore } from '@/stores';
 import { TerminalWindow } from '@/components/terminal';
 import { PlaylistItem } from './PlaylistItem';
-import { Loading } from '@/components/ui';
-import { ListMusic, Trash2, RefreshCw, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button, Loading } from '@/components/ui';
+import { ListMusic, Trash2, RefreshCw } from 'lucide-react';
 
 export function Playlist() {
   const {
@@ -17,28 +17,16 @@ export function Playlist() {
     removeTrackFromQueue,
     clearQueue,
     refreshPlaylist,
+    loadMoreTracks,
     isShuffled,
   } = usePlaylistStore();
 
   const { setCurrentTrack, currentTrack, setIsPlaying } = usePlayerStore();
   const activeItemRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [currentPage, setCurrentPage] = useState(0);
 
-  const TRACKS_PER_PAGE = 5;
-  const totalPages = Math.ceil(queue.length / TRACKS_PER_PAGE);
-  const startIndex = currentPage * TRACKS_PER_PAGE;
-  const visibleTracks = queue.slice(startIndex, startIndex + TRACKS_PER_PAGE);
-
-  // Auto-switch page when track changes (only when not focused)
-  useEffect(() => {
-    if (containerRef.current?.contains(document.activeElement)) return;
-    
-    if (queueIndex >= 0 && queue.length > 0) {
-      const trackPage = Math.floor(queueIndex / TRACKS_PER_PAGE);
-      if (trackPage !== currentPage) setCurrentPage(trackPage);
-    }
-  }, [queueIndex, queue.length, currentPage]);
+  // Show full queue (no paging)
+  const visibleTracks = queue; // All queued tracks
 
   // Sync current track with queue index - single source of truth
   useEffect(() => {
@@ -48,30 +36,7 @@ export function Playlist() {
     }
   }, [queueIndex, queue, currentTrack?.id, setCurrentTrack]);
 
-  // Reset page when queue changes completely
-  useEffect(() => {
-    setCurrentPage(0);
-  }, [activePlaylist?.id]);
 
-  // Handle keyboard navigation for pagination
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (!containerRef.current?.contains(document.activeElement)) return;
-
-      if (event.key === 'ArrowLeft' && !event.shiftKey) {
-        event.preventDefault();
-        event.stopPropagation();
-        setCurrentPage(p => Math.max(0, p - 1));
-      } else if (event.key === 'ArrowRight' && !event.shiftKey) {
-        event.preventDefault();
-        event.stopPropagation();
-        setCurrentPage(p => Math.min(totalPages - 1, p + 1));
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [totalPages]);
 
   const handlePlayTrack = (index: number) => {
     // Set queue index and request playback
@@ -86,23 +51,31 @@ export function Playlist() {
       title={`[QUEUE] ${queue.length} tracks${isShuffled ? ' [S]' : ''}`}
       className="h-full flex flex-col"
       headerActions={
-        queue.length > 0 && (
-          <div className="flex items-center gap-0.5">
-            <button
-              onClick={() => activePlaylist && refreshPlaylist(activePlaylist.id)}
-              disabled={isLoading || !activePlaylist}
-              className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
-            >
-              <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
-            </button>
-            <button
-              onClick={clearQueue}
-              className="p-0.5 text-terminal-muted hover:text-red-400"
-            >
-              <Trash2 className="w-3 h-3" />
-            </button>
-          </div>
-        )
+        <div className="flex items-center gap-0.5">
+          {queue.length > 0 && (
+            <>
+              <button
+                onClick={() => activePlaylist && refreshPlaylist(activePlaylist.id)}
+                disabled={isLoading || !activePlaylist}
+                className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
+              >
+                <RefreshCw className={`w-3 h-3 ${isLoading ? 'animate-spin' : ''}`} />
+              </button>
+              <button
+                onClick={clearQueue}
+                className="p-0.5 text-terminal-muted hover:text-red-400"
+              >
+                <Trash2 className="w-3 h-3" />
+              </button>
+            </>
+          )}
+
+          {activePlaylist && (
+            <Button size="sm" onClick={() => loadMoreTracks(20)} disabled={isLoading} className="ml-1">
+              Load more
+            </Button>
+          )}
+        </div>
       }
     >
       <div className="flex-1 overflow-y-auto">
@@ -118,7 +91,7 @@ export function Playlist() {
         ) : (
           <div>
             {visibleTracks.map((track, index) => {
-              const globalIndex = startIndex + index;
+              const globalIndex = index;
               return (
                 <div key={track.id} ref={globalIndex === queueIndex ? activeItemRef : undefined}>
                   <PlaylistItem
@@ -135,28 +108,7 @@ export function Playlist() {
         )}
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="border-t border-terminal-border p-1.5 flex items-center justify-between">
-          <button
-            onClick={() => setCurrentPage(p => Math.max(0, p - 1))}
-            disabled={currentPage === 0}
-            className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
-          >
-            <ChevronLeft className="w-4 h-4" />
-          </button>
-          <span className="font-mono text-[10px] text-terminal-muted">
-            {currentPage + 1}/{totalPages}
-          </span>
-          <button
-            onClick={() => setCurrentPage(p => Math.min(totalPages - 1, p + 1))}
-            disabled={currentPage === totalPages - 1}
-            className="p-0.5 text-terminal-muted hover:text-terminal-accent disabled:opacity-50"
-          >
-            <ChevronRight className="w-4 h-4" />
-          </button>
-        </div>
-      )}
+
     </TerminalWindow>
   );
 }

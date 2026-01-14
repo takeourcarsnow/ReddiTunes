@@ -5,7 +5,7 @@ import { TerminalHeader } from '@/components/terminal';
 import { HelpModal, useHelpModal } from '@/components/ui';
 import { KeyboardShortcutsProvider } from '@/hooks';
 import { useState, useEffect } from 'react';
-import { List, Star, History, HelpCircle, Github, Music } from 'lucide-react';
+import { List, Star, History, Music } from 'lucide-react';
 import { Player } from '@/components/player';
 
 type MobileTab = 'genres' | 'queue' | 'history' | 'favorites';
@@ -31,7 +31,7 @@ export function MainLayout() {
   return (
     <KeyboardShortcutsProvider>
       <div className="h-[100svh] flex flex-col overflow-hidden bg-terminal-bg pt-[max(env(safe-area-inset-top),0.5rem)]">
-        <TerminalHeader />
+        <TerminalHeader onOpenHelp={helpModal.open} />
 
         {/* Desktop Layout (lg+) */}
         <main className="hidden grid flex-1 min-h-0 grid-cols-[280px_1fr_280px]">
@@ -120,30 +120,6 @@ export function MainLayout() {
             </div>
           </nav>
         </main>
-
-        {/* Footer */}
-        <footer className="flex-shrink-0 border-t border-terminal-border bg-terminal-header py-1.5 px-3 pb-[max(env(safe-area-inset-bottom),1rem)]">
-          <div className="flex items-center justify-between font-mono text-xs text-terminal-muted">
-            <span className="hidden sm:inline">ReddiTunes v1.0</span>
-            <span className="sm:hidden">ReddiTunes</span>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => window.open('https://nefas.tv', '_blank')}
-                className="flex items-center gap-1 hover:text-terminal-accent"
-                title="Visit nefas.tv"
-              >
-                <Github className="w-3 h-3" />
-              </button>
-              <button
-                onClick={helpModal.open}
-                className="flex items-center gap-1 hover:text-terminal-accent"
-                title="Help"
-              >
-                <HelpCircle className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </footer>
 
         <HelpModal isOpen={helpModal.isOpen} onClose={helpModal.close} />
       </div>

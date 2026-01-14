@@ -92,7 +92,9 @@ export function CommentsModal({ permalink, title, isOpen, onClose }: CommentsMod
         <div className="flex items-center justify-between p-4 border-b border-terminal-border">
           <div className="flex items-center gap-2">
             <MessageCircle className="w-4 h-4 text-terminal-accent" />
-            <h2 className="text-terminal-text font-mono text-sm">Comments for: {title}</h2>
+            <h2 className="text-terminal-text font-mono text-sm truncate">
+              <span className="sr-only">Comments for </span>{title}
+            </h2>
           </div>
           <button onClick={onClose} className="text-terminal-muted hover:text-terminal-text">
             <X className="w-4 h-4" />
