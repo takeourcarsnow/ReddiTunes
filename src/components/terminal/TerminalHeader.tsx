@@ -39,19 +39,19 @@ export function TerminalHeader({ onOpenHelp }: TerminalHeaderProps) {
           {/* External site */}
           <button
             onClick={() => window.open('https://nefas.tv', '_blank')}
-            className="flex items-center gap-1 hover:text-terminal-accent"
+            className="p-2 rounded border border-terminal-border hover:bg-terminal-hover transition-colors"
             title="Visit nefas.tv"
           >
-            <Globe className="w-3 h-3" />
+            <Globe className="w-4 h-4 text-terminal-accent" />
           </button>
 
           {/* Help (opens modal) */}
           <button
             onClick={() => onOpenHelp?.()}
-            className="flex items-center gap-1 hover:text-terminal-accent"
+            className="p-2 rounded border border-terminal-border hover:bg-terminal-hover transition-colors"
             title="Help"
           >
-            <HelpCircle className="w-3 h-3" />
+            <HelpCircle className="w-4 h-4 text-terminal-accent" />
           </button>
 
           <ThemeToggle />

@@ -7,7 +7,7 @@ import { Genre, SortOption, TimeFilter } from '@/types';
 import { TerminalWindow } from '@/components/terminal';
 import { Button, Loading } from '@/components/ui';
 import { usePlayerStore } from '@/stores';
-import { ChevronDown } from 'lucide-react';
+import { Flame, Clock, Trophy, TrendingUp, Sun, Calendar, Infinity } from 'lucide-react';
 
 export function GenreSelector() {
   const {
@@ -22,9 +22,40 @@ export function GenreSelector() {
   } = usePlaylistStore();
 
   const [selectedGenre, setSelectedGenre] = useState<Genre | null>(null);
-  const [showOptions, setShowOptions] = useState(false);
 
   const { setIsPlaying } = usePlayerStore();
+
+  const getSortIcon = (sortValue: string) => {
+    switch (sortValue) {
+      case 'hot':
+        return <Flame className="w-3 h-3" />;
+      case 'new':
+        return <Clock className="w-3 h-3" />;
+      case 'top':
+        return <Trophy className="w-3 h-3" />;
+      case 'rising':
+        return <TrendingUp className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
+
+  const getTimeFilterIcon = (timeValue: string) => {
+    switch (timeValue) {
+      case 'hour':
+        return <Clock className="w-3 h-3" />;
+      case 'day':
+        return <Sun className="w-3 h-3" />;
+      case 'week':
+      case 'month':
+      case 'year':
+        return <Calendar className="w-3 h-3" />;
+      case 'all':
+        return <Infinity className="w-3 h-3" />;
+      default:
+        return null;
+    }
+  };
 
   // Prefetch the first genre once on mount for faster perceived load
   useEffect(() => {
@@ -56,65 +87,51 @@ export function GenreSelector() {
           <span className="sr-only">Select subreddit</span>
         </div>
 
-        {/* Sort options toggle */}
-        <button
-          onClick={() => setShowOptions(!showOptions)}
-          className="w-full flex items-center justify-between p-1.5 border border-terminal-border hover:border-terminal-accent font-mono text-[10px]"
-        >
-          <span className="text-terminal-muted">
-            Sort: <span className="text-terminal-text">{sortOption}</span>
-            {sortOption === 'top' && <span className="ml-1">({timeFilter})</span>}
-          </span>
-          <ChevronDown className={`w-3 h-3 text-terminal-muted ${showOptions ? 'rotate-180' : ''}`} />
-        </button>
-
-        {/* Options panel */}
-        {showOptions && (
-          <div className="border border-terminal-border p-2 space-y-2">
+        {/* Sort options */}
+        <div className="border border-terminal-border p-2 space-y-2">
+          <div>
+            <label className="font-mono text-[10px] text-terminal-muted block mb-1">Sort:</label>
+            <div className="flex flex-wrap gap-1">
+              {SORT_OPTIONS.map((option) => (
+                <Button
+                  key={option.value}
+                  size="sm"
+                  variant={sortOption === option.value ? 'primary' : 'default'}
+                  onClick={() => setSortOption(option.value as SortOption)}
+                >
+                  {getSortIcon(option.value)} {option.label}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {sortOption === 'top' && (
             <div>
-              <label className="font-mono text-[10px] text-terminal-muted block mb-1">Sort:</label>
+              <label className="font-mono text-[10px] text-terminal-muted block mb-1">Time:</label>
               <div className="flex flex-wrap gap-1">
-                {SORT_OPTIONS.map((option) => (
+                {TIME_FILTERS.map((filter) => (
                   <Button
-                    key={option.value}
+                    key={filter.value}
                     size="sm"
-                    variant={sortOption === option.value ? 'primary' : 'default'}
-                    onClick={() => setSortOption(option.value as SortOption)}
+                    variant={timeFilter === filter.value ? 'primary' : 'default'}
+                    onClick={() => setTimeFilter(filter.value as TimeFilter)}
                   >
-                    {option.label}
+                    {getTimeFilterIcon(filter.value)} {filter.label}
                   </Button>
                 ))}
               </div>
             </div>
-            {sortOption === 'top' && (
-              <div>
-                <label className="font-mono text-[10px] text-terminal-muted block mb-1">Time:</label>
-                <div className="flex flex-wrap gap-1">
-                  {TIME_FILTERS.map((filter) => (
-                    <Button
-                      key={filter.value}
-                      size="sm"
-                      variant={timeFilter === filter.value ? 'primary' : 'default'}
-                      onClick={() => setTimeFilter(filter.value as TimeFilter)}
-                    >
-                      {filter.label}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-            {selectedGenre && (
-              <Button
-                onClick={() => generatePlaylist(selectedGenre, sortOption, timeFilter)}
-                disabled={isLoading}
-                variant="primary"
-                className="w-full"
-              >
-                Regenerate
-              </Button>
-            )}
-          </div>
-        )}
+          )}
+          {selectedGenre && (
+            <Button
+              onClick={() => generatePlaylist(selectedGenre, sortOption, timeFilter)}
+              disabled={isLoading}
+              variant="primary"
+              className="w-full"
+            >
+              Regenerate
+            </Button>
+          )}
+        </div>
 
         {/* Loading */}
         {isLoading && (

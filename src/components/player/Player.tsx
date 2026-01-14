@@ -27,29 +27,45 @@ function PlayerComponent({ compact = false }: { compact?: boolean }) {
       }
       currentTrackIdRef.current = null;
     };
-  }, [currentTrack?.id]);
+  }, []); // Remove currentTrack?.id dependency to prevent unnecessary destruction
   const onReady = useCallback((event: YouTubeEvent) => {
-    // Only set up the player if it matches the current track
-    if (currentTrack?.id === currentTrackIdRef.current) {
-      return;
-    }
     playerRef.current = event.target;
     currentTrackIdRef.current = currentTrack?.id || null;
 
-    // If user requested playback, try to play immediately
-    try {
-      if (playerRef.current && isPlaying) {
-        // playVideo may be blocked on some mobile browsers, but this is a best-effort
-        playerRef.current.playVideo();
+    // Load the current video
+    if (currentTrack) {
+      try {
+        playerRef.current.loadVideoById(currentTrack.youtubeId);
+        if (isPlaying) {
+          playerRef.current.playVideo();
+        }
+      } catch (e) {
+        console.warn('[Player] load/play onReady failed', e);
       }
-    } catch (e) {
-      console.warn('[Player] play onReady failed', e);
+    }
+  }, [currentTrack, isPlaying]);
+
+  // When track changes, load the new video
+  useEffect(() => {
+    if (!currentTrack || !playerRef.current) return;
+    
+    // Only load if this is a different track than what's currently loaded
+    if (currentTrack.id !== currentTrackIdRef.current) {
+      try {
+        playerRef.current.loadVideoById(currentTrack.youtubeId);
+        currentTrackIdRef.current = currentTrack.id;
+        if (isPlaying) {
+          playerRef.current.playVideo();
+        }
+      } catch (e) {
+        console.warn('[Player] load video failed', e);
+      }
     }
   }, [currentTrack?.id, isPlaying]);
 
   // When track changes or user requested play, attempt to start playback
   useEffect(() => {
-    if (!currentTrack) return;
+    if (!currentTrack || !playerRef.current) return;
     if (playerRef.current && isPlaying) {
       try {
         playerRef.current.playVideo();
@@ -194,7 +210,6 @@ function PlayerComponent({ compact = false }: { compact?: boolean }) {
           <>
             <div className="w-36 h-20 bg-black rounded overflow-hidden">
               <YouTube
-                key={currentTrack.id}
                 videoId={currentTrack.youtubeId}
                 opts={{
                   ...YOUTUBE_PLAYER_OPTIONS,
@@ -230,7 +245,6 @@ function PlayerComponent({ compact = false }: { compact?: boolean }) {
           <>
             <div>
               <YouTube
-                key={currentTrack.id}
                 videoId={currentTrack.youtubeId}
                 opts={YOUTUBE_PLAYER_OPTIONS}
                 onReady={onReady}

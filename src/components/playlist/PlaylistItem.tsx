@@ -41,13 +41,13 @@ function PlaylistItemComponent({
   function FavoriteButton({ track }: { track: Track }) {
     const addFavorite = useFavoritesStore((s) => s.addFavorite);
     const removeFavorite = useFavoritesStore((s) => s.removeFavorite);
-    const isFav = useFavoritesStore((s) => s.isFavorite(track.id));
+    const isFav = useFavoritesStore((s) => s.isFavorite(track.youtubeId));
 
     return (
       <button
         onClick={(e) => {
           e.stopPropagation();
-          if (isFav) removeFavorite(track.id);
+          if (isFav) removeFavorite(track.youtubeId);
           else addFavorite(track);
         }}
         className={`p-0.5 hover:text-yellow-400 ${isFav ? 'text-yellow-400' : 'text-terminal-muted'}`}
