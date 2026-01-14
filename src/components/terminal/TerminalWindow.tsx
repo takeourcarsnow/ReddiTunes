@@ -1,5 +1,6 @@
 'use client';
 
+import { forwardRef } from 'react';
 import { WINDOW_CONTROLS } from '@/constants/ascii';
 
 interface TerminalWindowProps {
@@ -10,9 +11,10 @@ interface TerminalWindowProps {
   onClose?: () => void;
   onMinimize?: () => void;
   onMaximize?: () => void;
+  tabIndex?: number;
 }
 
-export function TerminalWindow({
+export const TerminalWindow = forwardRef<HTMLDivElement, TerminalWindowProps>(({
   title,
   children,
   className = '',
@@ -20,9 +22,10 @@ export function TerminalWindow({
   onClose,
   onMinimize,
   onMaximize,
-}: TerminalWindowProps) {
+  tabIndex,
+}, ref) => {
   return (
-    <div className={`border border-terminal-border bg-terminal-bg flex flex-col ${className}`}>
+    <div ref={ref} tabIndex={tabIndex} className={`border border-terminal-border bg-terminal-bg flex flex-col focus:outline-none focus:ring-1 focus:ring-terminal-accent ${className}`}>
       {/* Title bar */}
       <div className="flex items-center justify-between px-2 py-1 border-b border-terminal-border bg-terminal-header min-h-[28px]">
         <div className="flex items-center gap-2 flex-1 min-w-0">
@@ -71,4 +74,6 @@ export function TerminalWindow({
       </div>
     </div>
   );
-}
+});
+
+TerminalWindow.displayName = 'TerminalWindow';

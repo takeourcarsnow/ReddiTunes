@@ -22,6 +22,7 @@ export function Playlist() {
 
   const { setCurrentTrack, currentTrack } = usePlayerStore();
   const activeItemRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [currentPage, setCurrentPage] = useState(0);
 
   const TRACKS_PER_PAGE = 5;
@@ -29,8 +30,10 @@ export function Playlist() {
   const startIndex = currentPage * TRACKS_PER_PAGE;
   const visibleTracks = queue.slice(startIndex, startIndex + TRACKS_PER_PAGE);
 
-  // Auto-switch page when track changes
+  // Auto-switch page when track changes (only when not focused)
   useEffect(() => {
+    if (containerRef.current?.contains(document.activeElement)) return;
+    
     if (queueIndex >= 0 && queue.length > 0) {
       const trackPage = Math.floor(queueIndex / TRACKS_PER_PAGE);
       if (trackPage !== currentPage) setCurrentPage(trackPage);
@@ -50,6 +53,26 @@ export function Playlist() {
     setCurrentPage(0);
   }, [activePlaylist?.id]);
 
+  // Handle keyboard navigation for pagination
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (!containerRef.current?.contains(document.activeElement)) return;
+
+      if (event.key === 'ArrowLeft' && !event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        setCurrentPage(p => Math.max(0, p - 1));
+      } else if (event.key === 'ArrowRight' && !event.shiftKey) {
+        event.preventDefault();
+        event.stopPropagation();
+        setCurrentPage(p => Math.min(totalPages - 1, p + 1));
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [totalPages]);
+
   const handlePlayTrack = (index: number) => {
     // Only set queue index - the effect will handle setting current track
     setQueueIndex(index);
@@ -57,6 +80,8 @@ export function Playlist() {
 
   return (
     <TerminalWindow
+      ref={containerRef}
+      tabIndex={0}
       title={`[QUEUE] ${queue.length} tracks${isShuffled ? ' [S]' : ''}`}
       className="h-full flex flex-col"
       headerActions={
