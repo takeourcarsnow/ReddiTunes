@@ -13,12 +13,13 @@ export async function fetchSubredditPosts(
   const params = new URLSearchParams({
     sort,
     limit: limit.toString(),
+    raw_json: '1',
   });
   
   if (after) params.set('after', after);
   if (sort === 'top') params.set('t', timeFilter);
   
-  const url = `/api/reddit/${subreddit}?${params}`;
+  const url = `${REDDIT_BASE_URL}/r/${subreddit}/${sort}.json?${params}`;
   
   const response = await fetch(url);
   
