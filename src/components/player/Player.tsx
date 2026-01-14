@@ -14,6 +14,7 @@ export function Player() {
     volume,
     isMuted,
     isLoading,
+    isPlaying,
     setIsPlaying,
     setDuration,
     setProgress,
@@ -46,7 +47,12 @@ export function Player() {
     event.target.setVolume(volume);
     if (isMuted) event.target.mute();
     currentVideoId.current = currentTrack?.youtubeId || null;
-  }, [volume, isMuted, currentTrack?.youtubeId]);
+    
+    // If we should be playing, start playback
+    if (isPlaying) {
+      playerManager.play();
+    }
+  }, [volume, isMuted, currentTrack?.youtubeId, isPlaying]);
 
   const onStateChange = useCallback((event: YouTubeEvent) => {
     const state = event.data;
@@ -120,7 +126,7 @@ export function Player() {
                 onStateChange={onStateChange}
                 onError={onError}
                 className="w-full h-full"
-                iframeClassName="w-full h-full"
+                iframeClassName="w-full h-full pointer-events-none"
               />
             </div>
             {isLoading && (
