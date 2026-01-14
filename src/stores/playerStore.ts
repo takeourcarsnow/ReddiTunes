@@ -26,7 +26,8 @@ export const usePlayerStore = create<PlayerState>()(
       isPlaying: false,
 
       setCurrentTrack: (track) => {
-        set({ currentTrack: track, isLoading: true });
+        // Don't mark global loading when changing tracks — transient loading shouldn't show a global loader
+        set({ currentTrack: track });
       },
       setIsLoading: (loading) => set({ isLoading: loading }),
       setRepeatMode: (mode) => set({ repeatMode: mode }),

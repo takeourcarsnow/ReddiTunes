@@ -141,7 +141,7 @@ export function Player({ compact = false }: { compact?: boolean }) {
         }
         break;
       case PLAYER_STATES.BUFFERING:
-        setIsLoading(true);
+        // Don't set global loading for transient buffering to avoid layout shift
         break;
       case PLAYER_STATES.PLAYING:
         setIsLoading(false);
@@ -213,7 +213,6 @@ export function Player({ compact = false }: { compact?: boolean }) {
               <div className="font-mono text-[11px] text-terminal-text truncate w-36">{currentTrack.title}</div>
               <div className="font-mono text-[10px] text-terminal-muted truncate w-36">{currentTrack.artist || ''}</div>
             </div>
-            {isLoading && <div className="text-xs text-terminal-muted">Buffering…</div>}
           </>
         ) : (
           <div className="font-mono text-[10px] text-terminal-muted">No track</div>
@@ -242,11 +241,6 @@ export function Player({ compact = false }: { compact?: boolean }) {
                 iframeClassName="w-full h-full"
               />
             </div>
-            {isLoading && (
-              <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
-                <Loading text="Buffering" />
-              </div>
-            )}
           </>
         ) : (
           <div className="absolute inset-0 flex items-center justify-center bg-terminal-bg-secondary">

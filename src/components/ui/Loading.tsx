@@ -4,9 +4,10 @@ import { useEffect, useState } from 'react';
 
 interface LoadingProps {
   text?: string;
+  showText?: boolean;
 }
 
-export function Loading({ text = 'Loading' }: LoadingProps) {
+export function Loading({ text = 'Loading', showText = true }: LoadingProps) {
   const [dots, setDots] = useState('');
 
   useEffect(() => {
@@ -17,8 +18,13 @@ export function Loading({ text = 'Loading' }: LoadingProps) {
   }, []);
 
   return (
-    <div className="font-mono text-xs text-terminal-accent">
-      {text}{dots}
+    <div className="flex items-center gap-2">
+      <div className="w-3 h-3 rounded-full border-2 border-terminal-accent border-t-transparent animate-spin" aria-hidden></div>
+      {showText && (
+        <div className="font-mono text-xs text-terminal-accent">
+          {text}{dots}
+        </div>
+      )}
     </div>
   );
-}
+} 

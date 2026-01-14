@@ -69,7 +69,7 @@ export const TerminalWindow = forwardRef<HTMLDivElement, TerminalWindowProps>(({
         )}
       </div>
       {/* Content */}
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-visible">
         {children}
       </div>
     </div>
