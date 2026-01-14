@@ -11,21 +11,16 @@ export async function fetchSubredditPosts(
   after?: string
 ): Promise<{ posts: RedditPost[]; after: string | null }> {
   const params = new URLSearchParams({
+    sort,
     limit: limit.toString(),
-    raw_json: '1',
   });
   
   if (after) params.set('after', after);
   if (sort === 'top') params.set('t', timeFilter);
   
-  const url = `${REDDIT_BASE_URL}/r/${subreddit}/${sort}.json?${params}`;
+  const url = `/api/reddit/${subreddit}?${params}`;
   
-  const response = await fetch(url, {
-    headers: {
-      'User-Agent': 'ReddiTunes/1.0',
-    },
-    next: { revalidate: 300 }, // Cache for 5 minutes
-  });
+  const response = await fetch(url);
   
   if (!response.ok) {
     throw new Error(`Failed to fetch from r/${subreddit}: ${response.status}`);
